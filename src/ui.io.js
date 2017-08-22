@@ -16,7 +16,7 @@ MM.UI.IO = function() {
 
 	this._backend.value = localStorage.getItem(this._prefix + "backend") || MM.Backend.File.id;
 	this._backend.addEventListener("change", this);
-	
+
 	MM.subscribe("map-new", this);
 	MM.subscribe("save-done", this);
 	MM.subscribe("load-done", this);
@@ -28,7 +28,7 @@ MM.UI.IO.prototype.restore = function() {
 		var keyvalue = item.split("=");
 		parts[decodeURIComponent(keyvalue[0])] = decodeURIComponent(keyvalue[1]);
 	});
-	
+
 	/* backwards compatibility */
 	if ("map" in parts) { parts.url = parts.map; }
 
@@ -37,7 +37,7 @@ MM.UI.IO.prototype.restore = function() {
 
 	var backend = MM.UI.Backend.getById(parts.b);
 	if (backend) { /* saved backend info */
-		backend.setState(parts); 
+		backend.setState(parts);
 		return;
 	}
 
@@ -63,7 +63,7 @@ MM.UI.IO.prototype.handleMessage = function(message, publisher) {
 		case "map-new":
 			this._setCurrentBackend(null);
 		break;
-		
+
 		case "save-done":
 		case "load-done":
 			this.hide();
@@ -76,7 +76,7 @@ MM.UI.IO.prototype.show = function(mode) {
 	this._mode = mode;
 	this._node.classList.add("visible");
 	this._heading.innerHTML = mode;
-	
+
 	this._syncBackend();
 	window.addEventListener("keydown", this);
 }
@@ -89,7 +89,7 @@ MM.UI.IO.prototype.hide = function() {
 }
 
 MM.UI.IO.prototype.quickSave = function() {
-	if (this._currentBackend) { 
+	if (this._currentBackend) {
 		this._currentBackend.save();
 	} else {
 		this.show("save");
@@ -97,11 +97,12 @@ MM.UI.IO.prototype.quickSave = function() {
 }
 
 MM.UI.IO.prototype.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	switch (e.type) {
 		case "keydown":
 			if (e.keyCode == 27) { this.hide(); }
 		break;
-		
+
 		case "change":
 			this._syncBackend();
 		break;
@@ -111,9 +112,9 @@ MM.UI.IO.prototype.handleEvent = function(e) {
 MM.UI.IO.prototype._syncBackend = function() {
 	var all = this._node.querySelectorAll("div[id]");
 	[].slice.apply(all).forEach(function(node) { node.style.display = "none"; });
-	
+
 	this._node.querySelector("#" + this._backend.value).style.display = "";
-	
+
 	this._backends[this._backend.value].show(this._mode);
 }
 
@@ -122,7 +123,7 @@ MM.UI.IO.prototype._syncBackend = function() {
  */
 MM.UI.IO.prototype._setCurrentBackend = function(backend) {
 	if (this._currentBackend && this._currentBackend != backend) { this._currentBackend.reset(); }
-	
+
 	if (backend) { localStorage.setItem(this._prefix + "backend", backend.id); }
 	this._currentBackend = backend;
 	try {

@@ -6,13 +6,13 @@ MM.UI.Backend.init = function(select) {
 	this._prefix = "mm.app." + this.id + ".";
 
 	this._node = document.querySelector("#" + this.id);
-	
+
 	this._cancel = this._node.querySelector(".cancel");
 	this._cancel.addEventListener("click", this);
 
 	this._go = this._node.querySelector(".go");
 	this._go.addEventListener("click", this);
-	
+
 	select.appendChild(this._backend.buildOption());
 }
 
@@ -28,6 +28,7 @@ MM.UI.Backend.getState = function() {
 }
 
 MM.UI.Backend.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	switch (e.target) {
 		case this._cancel:
 			MM.App.io.hide();
@@ -65,7 +66,7 @@ MM.UI.Backend._action = function() {
 		case "save":
 			this.save();
 		break;
-		
+
 		case "load":
 			this.load();
 		break;
@@ -82,7 +83,7 @@ MM.UI.Backend._loadDone = function(json) {
 	try {
 		MM.App.setMap(MM.Map.fromJSON(json));
 		MM.publish("load-done", this);
-	} catch (e) { 
+	} catch (e) {
 		this._error(e);
 	}
 }
@@ -94,15 +95,15 @@ MM.UI.Backend._error = function(e) {
 
 MM.UI.Backend._buildList = function(list, select) {
 	var data = [];
-	
+
 	for (var id in list) {
 		data.push({id:id, name:list[id]});
 	}
-	
+
 	data.sort(function(a, b) {
 		return a.name.localeCompare(b.name);
 	});
-	
+
 	data.forEach(function(item) {
 		var o = document.createElement("option");
 		o.value = item.id;

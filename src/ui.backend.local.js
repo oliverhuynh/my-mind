@@ -4,19 +4,20 @@ MM.UI.Backend.Local = Object.create(MM.UI.Backend, {
 
 MM.UI.Backend.Local.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
-	
+
 	this._list = this._node.querySelector(".list");
 	this._remove = this._node.querySelector(".remove");
 	this._remove.addEventListener("click", this);
 }
 
 MM.UI.Backend.Local.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	MM.UI.Backend.handleEvent.call(this, e);
 
 	switch (e.target) {
 		case this._remove:
 			var id = this._list.value;
-			if (!id) { break; } 
+			if (!id) { break; }
 			this._backend.remove(id);
 			this.show(this._mode);
 		break;
@@ -25,10 +26,10 @@ MM.UI.Backend.Local.handleEvent = function(e) {
 
 MM.UI.Backend.Local.show = function(mode) {
 	MM.UI.Backend.show.call(this, mode);
-	
+
 	this._go.disabled = false;
 
-	if (mode == "load") { 
+	if (mode == "load") {
 		var list = this._backend.list();
 		this._list.innerHTML = "";
 		if (Object.keys(list).length) {

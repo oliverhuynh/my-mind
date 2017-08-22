@@ -1,6 +1,6 @@
 MM.UI = function() {
 	this._node = document.querySelector(".ui");
-	
+
 	this._toggle = this._node.querySelector("#toggle");
 
 	this._layout = new MM.UI.Layout();
@@ -8,7 +8,7 @@ MM.UI = function() {
 	this._color = new MM.UI.Color();
 	this._value = new MM.UI.Value();
 	this._status = new MM.UI.Status();
-		
+
 	MM.subscribe("item-select", this);
 	MM.subscribe("item-change", this);
 
@@ -31,6 +31,7 @@ MM.UI.prototype.handleMessage = function(message, publisher) {
 }
 
 MM.UI.prototype.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	switch (e.type) {
 		case "click":
 			if (e.target.nodeName.toLowerCase() != "select") { MM.Clipboard.focus(); } /* focus the clipboard (2c) */
@@ -39,7 +40,7 @@ MM.UI.prototype.handleEvent = function(e) {
 				this.toggle();
 				return;
 			}
-			
+
 			var node = e.target;
 			while (node != document) {
 				var command = node.getAttribute("data-command");

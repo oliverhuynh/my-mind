@@ -4,7 +4,7 @@ MM.UI.Backend.Firebase = Object.create(MM.UI.Backend, {
 
 MM.UI.Backend.Firebase.init = function(select) {
 	MM.UI.Backend.init.call(this, select);
-	
+
 	this._online = false;
 	this._itemChangeTimeout = null;
 	this._list = this._node.querySelector(".list");
@@ -45,6 +45,7 @@ MM.UI.Backend.Firebase.show = function(mode) {
 }
 
 MM.UI.Backend.Firebase.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	MM.UI.Backend.handleEvent.call(this, e);
 
 	switch (e.target) {
@@ -106,7 +107,7 @@ MM.UI.Backend.Firebase._action = function() {
 		this._connect(this._server.value, this._auth.value);
 		return;
 	}
-	
+
 	MM.UI.Backend._action.call(this);
 }
 

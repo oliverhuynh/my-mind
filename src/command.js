@@ -232,6 +232,7 @@ MM.Command.Pan._step = function() {
 }
 
 MM.Command.Pan.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	var ch = String.fromCharCode(e.keyCode);
 	var index = this.chars.indexOf(ch);
 	if (index > -1) {
@@ -289,11 +290,75 @@ MM.Command.Fold.execute = function() {
 	MM.App.map.ensureItemVisibility(item);
 }
 
-console.log("New !");
 MM.Command.ExportToIndent = Object.create(MM.Command, {
 	label: {value: "Export To Indent"}
 });
+/*TO Separate file*/
+jQuery.fn.selectText = function(){
+    var doc = document
+        , element = this[0]
+        , range, selection
+    ;
+    if (doc.body.createTextRange) {
+        range = document.body.createTextRange();
+        range.moveToElementText(element);
+        range.select();
+    } else if (window.getSelection) {
+        selection = window.getSelection();
+        range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+};
+var _to_Indent = {
+  // TODO: build can attach to prototype of item for easier managing
+  addidentation: function(identation) {
+    if (identation== 0) {
+      return "";
+    }
+    return "&nbsp;".repeat(identation-1) + "-&nbsp;";
+  },
+  build: function(item, identation) {
+    identation = identation || 0;
+    // Get text and print as headline
+    var _return = this.addidentation(identation) + item.getText();
+    // Loop for all children
+    // Get content and put below headline
+    var _child_return = "";
+    var childrens = item.getChildren(), cl = childrens.length;
+    var i = 0;
+    for (i=0; i<=cl-1; i++) {
+      _child_return += _to_Indent.build(childrens[i], identation+1);
+    }
+
+    // If content is single line, put right after headline
+    _child_return = "<div class='theitemgroups'>"+ _child_return +"</div>";
+    _return = "<div class='theitem'>"+ _return +"</div>" + _child_return;
+
+    return _return;
+  }
+};
 MM.Command.ExportToIndent.execute = function() {
 	var item = MM.App.current;
-	console.log(item);
+	var _out = _to_Indent.build(item);
+  MM.App.stophandle = true;
+  $('<div id="dialog-form" title="Indent Exportation"></div>').append("<div class='export'>" + _out + "</div>").appendTo($('body')).dialog({
+    modal: true,
+    buttons: {
+      Ok: function() {
+        $( this ).dialog( "close" );
+      },
+      Select: function() {
+        var $this = $(this);
+        $this.children('.export').css('user-select', 'all').selectText();
+      }
+    },
+    open: function(event, ui){
+    },
+    close: function(event, ui){
+      $(this).remove();
+      MM.App.stophandle = false;
+    }
+  });
 }

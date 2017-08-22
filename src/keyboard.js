@@ -5,13 +5,14 @@ MM.Keyboard.init = function() {
 }
 
 MM.Keyboard.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	/* mode 2a: ignore keyboard when the activeElement resides somewhere inside of the UI pane */
 	var node = document.activeElement;
 	while (node && node != document) {
 		if (node.classList.contains("ui")) { return; }
 		node = node.parentNode;
 	}
-	
+
 	var commands = MM.Command.getAll();
 	for (var i=0;i<commands.length;i++) {
 		var command = commands[i];

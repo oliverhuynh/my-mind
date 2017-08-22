@@ -22,6 +22,7 @@ MM.Mouse.init = function(port) {
 }
 
 MM.Mouse.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	switch (e.type) {
 		case "click":
 			var item = MM.App.map.getItemFor(e.target);

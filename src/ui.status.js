@@ -8,6 +8,7 @@ MM.UI.Status.prototype.update = function() {
 }
 
 MM.UI.Status.prototype.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	var action = new MM.Action.SetStatus(MM.App.current, this._select.value || null);
 	MM.App.action(action);
 }

@@ -2,6 +2,7 @@ MM.Tip = {
 	_node: null,
 
 	handleEvent: function() {
+    if (MM.App.stophandle) { return ; }
 		this._hide();
 	},
 

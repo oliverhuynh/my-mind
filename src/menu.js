@@ -1,7 +1,7 @@
 MM.Menu = {
 	_dom: {},
 	_port: null,
-	
+
 	open: function(x, y) {
 		this._dom.node.style.display = "";
 		var w = this._dom.node.offsetWidth;
@@ -16,20 +16,21 @@ MM.Menu = {
 		this._dom.node.style.left = left+"px";
 		this._dom.node.style.top = top+"px";
 	},
-	
+
 	close: function() {
 		this._dom.node.style.display = "none";
 	},
-	
+
 	handleEvent: function(e) {
+    if (MM.App.stophandle) { return ; }
 		if (e.currentTarget != this._dom.node) {
 			this.close();
 			return;
 		}
-		
+
 		e.stopPropagation(); /* no dragdrop, no blur of activeElement */
 		e.preventDefault(); /* we do not want to focus the button */
-		
+
 		var command = e.target.getAttribute("data-command");
 		if (!command) { return; }
 
@@ -39,7 +40,7 @@ MM.Menu = {
 		command.execute();
 		this.close();
 	},
-	
+
 	init: function(port) {
 		this._port = port;
 		this._dom.node = document.querySelector("#menu");
@@ -47,10 +48,10 @@ MM.Menu = {
 		[].slice.call(buttons).forEach(function(button) {
 			button.innerHTML = MM.Command[button.getAttribute("data-command")].label;
 		});
-		
+
 		this._port.addEventListener("mousedown", this);
 		this._dom.node.addEventListener("mousedown", this);
-		
+
 		this.close();
 	}
 }

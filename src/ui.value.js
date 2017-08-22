@@ -12,6 +12,7 @@ MM.UI.Value.prototype.update = function() {
 }
 
 MM.UI.Value.prototype.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	var value = this._select.value;
 	if (value == "num") {
 		MM.Command.Value.execute();

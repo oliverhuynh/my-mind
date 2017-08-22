@@ -7,17 +7,17 @@ setInterval(function() {
 /*
  * Notes regarding app state/modes, activeElements, focusing etc.
  * ==============================================================
- * 
- * 1) There is always exactly one item selected. All executed commands 
+ *
+ * 1) There is always exactly one item selected. All executed commands
  *    operate on this item.
- * 
+ *
  * 2) The app distinguishes three modes with respect to focus:
- *   2a) One of the UI panes has focus (inputs, buttons, selects). 
+ *   2a) One of the UI panes has focus (inputs, buttons, selects).
  *       Keyboard shortcuts are disabled.
- *   2b) Current item is being edited. It is contentEditable and focused. 
+ *   2b) Current item is being edited. It is contentEditable and focused.
  *       Blurring ends the edit mode.
  *   2c) ELSE the Clipboard is focused (its invisible textarea)
- * 
+ *
  * In 2a, we try to lose focus as soon as possible
  * (after clicking, after changing select's value), switching to 2c.
  *
@@ -30,7 +30,7 @@ setInterval(function() {
  *       this calls MM.Command.Finish (3b).
  *   3b) By blurring the currentElement;
  *       this calls MM.Command.Finish (3b).
- * 
+ *
  */
 MM.App = {
 	keyboard: null,
@@ -51,19 +51,19 @@ MM.App = {
 		ghost: null
 	},
 	_fontSize: 100,
-	
+
 	action: function(action) {
 		if (this.historyIndex < this.history.length) { /* remove undoed actions */
 			this.history.splice(this.historyIndex, this.history.length-this.historyIndex);
 		}
-		
+
 		this.history.push(action);
 		this.historyIndex++;
-		
+
 		action.perform();
 		return this;
 	},
-	
+
 	setMap: function(map) {
 		if (this.map) { this.map.hide(); }
 
@@ -73,7 +73,7 @@ MM.App = {
 		this.map = map;
 		this.map.show(this._port);
 	},
-	
+
 	select: function(item) {
 		if (this.current && this.current != item) { this.current.deselect(); }
 		this.current = item;
@@ -86,7 +86,7 @@ MM.App = {
 		this.map.update();
 		this.map.ensureItemVisibility(this.current);
 	},
-	
+
 	handleMessage: function(message, publisher) {
 		switch (message) {
 			case "ui-change":
@@ -102,6 +102,7 @@ MM.App = {
 	},
 
 	handleEvent: function(e) {
+    if (MM.App.stophandle) { return ; }
 		switch (e.type) {
 			case "resize":
 				this._syncPort();
@@ -113,7 +114,7 @@ MM.App = {
 			break;
 		}
 	},
-	
+
 	setThrobber: function(visible) {
 		this._throbber.classList[visible ? "add" : "remove"]("visible");
 	},
@@ -135,7 +136,7 @@ MM.App = {
 		window.addEventListener("beforeunload", this);
 		MM.subscribe("ui-change", this);
 		MM.subscribe("item-change", this);
-		
+
 		this._syncPort();
 		this.setMap(new MM.Map());
 	},

@@ -54,7 +54,7 @@ MM.Item.COLOR = "#999";
      *                                                                                    ______ path, search
      *                                                                                          __________________________ end with a non-forbidden char
      *                                                                                                                    ______ end of word or end of string
-     */                                                                                                                           
+     */
 MM.Item.RE = /\b(([a-z][\w-]+:\/\/\w)|(([\w-]+\.){2,}[a-z][\w-]+)|([\w-]+\.[a-z][\w-]+\/))[^\s]*([^\s,.;:?!<>\(\)\[\]'"])?($|\b)/i;
 
 MM.Item.fromJSON = function(data) {
@@ -66,7 +66,7 @@ MM.Item.prototype.toJSON = function() {
 		id: this._id,
 		text: this.getText()
 	}
-	
+
 	if (this._side) { data.side = this._side; }
 	if (this._color) { data.color = this._color; }
 	if (this._value) { data.value = this._value; }
@@ -110,22 +110,22 @@ MM.Item.prototype.mergeWith = function(data) {
 
 	if (this.getText() != data.text && !this._dom.text.contentEditable) { this.setText(data.text); }
 
-	if (this._side != data.side) { 
+	if (this._side != data.side) {
 		this._side = data.side;
 		dirty = 1;
 	}
 
-	if (this._color != data.color) { 
+	if (this._color != data.color) {
 		this._color = data.color;
 		dirty = 2;
 	}
 
-	if (this._value != data.value) { 
+	if (this._value != data.value) {
 		this._value = data.value;
 		dirty = 1;
 	}
 
-	if (this._status != data.status) { 
+	if (this._status != data.status) {
 		this._status = data.status;
 		dirty = 1;
 	}
@@ -201,7 +201,7 @@ MM.Item.prototype.update = function(doNotRecurse) {
 			this._shape.set(this);
 		}
 	}
-	
+
 	this._updateStatus();
 	this._updateValue();
 
@@ -314,7 +314,7 @@ MM.Item.prototype.getOwnLayout = function() {
 
 MM.Item.prototype.setLayout = function(layout) {
 	this._layout = layout;
-	return this.updateSubtree();	
+	return this.updateSubtree();
 }
 
 MM.Item.prototype.getShape = function() {
@@ -369,7 +369,7 @@ MM.Item.prototype.setParent = function(parent) {
 MM.Item.prototype.insertChild = function(child, index) {
 	/* Create or remove child as necessary. This must be done before computing the index (inserting own child) */
 	var newChild = false;
-	if (!child) { 
+	if (!child) {
 		child = new MM.Item();
 		newChild = true;
 	} else if (child.getParent() && child.getParent().removeChild) { /* only when the child has non-map parent */
@@ -382,12 +382,12 @@ MM.Item.prototype.insertChild = function(child, index) {
 	}
 
 	if (arguments.length < 2) { index = this._children.length; }
-	
+
 	var next = null;
 	if (index < this._children.length) { next = this._children[index].getDOM().node; }
 	this._dom.children.insertBefore(child.getDOM().node, next);
 	this._children.splice(index, 0, child);
-	
+
 	return child.setParent(this);
 }
 
@@ -396,14 +396,14 @@ MM.Item.prototype.removeChild = function(child) {
 	this._children.splice(index, 1);
 	var node = child.getDOM().node;
 	node.parentNode.removeChild(node);
-	
+
 	child.setParent(null);
-	
+
 	if (!this._children.length) {
 		this._dom.toggle.parentNode.removeChild(this._dom.toggle);
 		this._dom.children.parentNode.removeChild(this._dom.children);
 	}
-	
+
 	return this.update();
 }
 
@@ -438,6 +438,7 @@ MM.Item.prototype.stopEditing = function() {
 }
 
 MM.Item.prototype.handleEvent = function(e) {
+  if (MM.App.stophandle) { return ; }
 	switch (e.type) {
 		case "input":
 			this.update();
@@ -511,11 +512,11 @@ MM.Item.prototype._updateValue = function() {
 		this._dom.value.innerHTML = this._value;
 		return;
 	}
-	
+
 	var childValues = this._children.map(function(child) {
 		return child.getComputedValue();
 	});
-	
+
 	var result = 0;
 	switch (this._value) {
 		case "sum":
@@ -523,22 +524,22 @@ MM.Item.prototype._updateValue = function() {
 				return prev+cur;
 			}, 0);
 		break;
-		
+
 		case "avg":
 			var sum = childValues.reduce(function(prev, cur) {
 				return prev+cur;
 			}, 0);
 			result = (childValues.length ? sum/childValues.length : 0);
 		break;
-		
+
 		case "max":
 			result = Math.max.apply(Math, childValues);
 		break;
-		
+
 		case "min":
 			result = Math.min.apply(Math, childValues);
 		break;
-		
+
 		default:
 			this._computed.value = 0;
 			this._dom.value.innerHTML = "";
@@ -546,7 +547,7 @@ MM.Item.prototype._updateValue = function() {
 			return;
 		break;
 	}
-	
+
 	this._computed.value = result;
 	this._dom.value.innerHTML = (Math.round(result) == result ? result : result.toFixed(3));
 }
@@ -561,7 +562,7 @@ MM.Item.prototype._findLinks = function(node) {
 				if (child.nodeName.toLowerCase() == "a") { continue; }
 				this._findLinks(child);
 			break;
-			
+
 			case 3: /* text */
 				var result = child.nodeValue.match(this.constructor.RE);
 				if (result) {
@@ -569,13 +570,13 @@ MM.Item.prototype._findLinks = function(node) {
 					var after = child.nodeValue.substring(result.index + result[0].length);
 					var link = document.createElement("a");
 					link.innerHTML = link.href = result[0];
-					
+
 					if (before) {
 						node.insertBefore(document.createTextNode(before), child);
 					}
 
 					node.insertBefore(link, child);
-					
+
 					if (after) {
 						child.nodeValue = after;
 						i--; /* re-try with the aftertext */
