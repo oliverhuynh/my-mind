@@ -7,8 +7,9 @@ MM.UI.Backend.WebDAV.init = function(select) {
 
 	this._url = this._node.querySelector(".url");
 	this._url.value = localStorage.getItem(this._prefix + "url") || "";
-	
+
 	this._current = "";
+  this.filllist();
 }
 
 MM.UI.Backend.WebDAV.getState = function() {
@@ -20,6 +21,20 @@ MM.UI.Backend.WebDAV.getState = function() {
 
 MM.UI.Backend.WebDAV.setState = function(data) {
 	this._load(data.url);
+}
+
+MM.UI.Backend.WebDAV.filllist = function() {
+  $("#webdav .list").find("option").remove();
+  $.ajax({
+      url:'http://mindmap.dev.jufist.org/list.json',
+      type:'POST',
+      dataType: 'json',
+      success: function( json ) {
+          $.each(json, function(i, value) {
+              $("#webdav .list").append($('<option>').text(value).attr('value', value));
+          });
+      }
+  });
 }
 
 MM.UI.Backend.WebDAV.save = function() {
@@ -46,7 +61,9 @@ MM.UI.Backend.WebDAV.save = function() {
 }
 
 MM.UI.Backend.WebDAV.load = function() {
-	this._load(this._url.value);
+  var url = localStorage.getItem(this._prefix + "url") || "";
+  var theurl = url + "/" + $("#webdav .list").val();
+	this._load(theurl);
 }
 
 MM.UI.Backend.WebDAV._load = function(url) {
@@ -66,7 +83,7 @@ MM.UI.Backend.WebDAV._load = function(url) {
 MM.UI.Backend.WebDAV._loadDone = function(data) {
 	try {
 		var json = MM.Format.JSON.from(data);
-	} catch (e) { 
+	} catch (e) {
 		this._error(e);
 	}
 

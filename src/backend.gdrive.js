@@ -2,8 +2,8 @@ MM.Backend.GDrive = Object.create(MM.Backend, {
 	id: {value: "gdrive"},
 	label: {value: "Google Drive"},
 	scope: {value: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.install"},
-	clientId: {value: "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com"},
-	apiKey: {value: "AIzaSyCzu1qVxlgufneOYpBgDJXN6Z9SNVcHYWM"},
+	clientId: {value: "510182693209-e8e9cflc6sq45faqe0b82s7p380844tt.apps.googleusercontent.com"},
+	apiKey: {value: "AIzaSyC0MTeQdz9CX4BLslUvbjQs4sEpHg_2vfU"},
 	fileId: {value: null, writable: true}
 });
 
@@ -60,7 +60,7 @@ MM.Backend.GDrive._send = function(data, name, mime) {
 			promise.fulfill();
 		}
 	}.bind(this));
-	
+
 	return promise;
 }
 
@@ -151,7 +151,7 @@ MM.Backend.GDrive._connect = function() {
 MM.Backend.GDrive._loadGapi = function() {
 	var promise = new Promise();
 	if (window.gapi) { return promise.fulfill(); }
-	
+
 	var script = document.createElement("script");
 	var name = ("cb"+Math.random()).replace(".", "");
 	window[name] = promise.fulfill.bind(promise);

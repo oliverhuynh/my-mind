@@ -64,7 +64,7 @@ MM.Command.InsertChild = Object.create(MM.Command, {
 MM.Command.InsertChild.execute = function() {
 	var item = MM.App.current;
 	var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
-	MM.App.action(action);	
+	MM.App.action(action);
 
 	MM.Command.Edit.execute();
 
@@ -80,7 +80,7 @@ MM.Command.Delete.isValid = function() {
 }
 MM.Command.Delete.execute = function() {
 	var action = new MM.Action.RemoveItem(MM.App.current);
-	MM.App.action(action);	
+	MM.App.action(action);
 }
 
 MM.Command.Swap = Object.create(MM.Command, {
@@ -96,7 +96,7 @@ MM.Command.Swap.execute = function(e) {
 
 	var diff = (e.keyCode == 38 ? -1 : 1);
 	var action = new MM.Action.Swap(MM.App.current, diff);
-	MM.App.action(action);	
+	MM.App.action(action);
 }
 
 MM.Command.Side = Object.create(MM.Command, {
@@ -287,4 +287,13 @@ MM.Command.Fold.execute = function() {
 	var item = MM.App.current;
 	if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
 	MM.App.map.ensureItemVisibility(item);
+}
+
+console.log("New !");
+MM.Command.ExportToIndent = Object.create(MM.Command, {
+	label: {value: "Export To Indent"}
+});
+MM.Command.ExportToIndent.execute = function() {
+	var item = MM.App.current;
+	console.log(item);
 }

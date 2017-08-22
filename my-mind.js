@@ -1660,7 +1660,7 @@ MM.Command.InsertChild = Object.create(MM.Command, {
 MM.Command.InsertChild.execute = function() {
 	var item = MM.App.current;
 	var action = new MM.Action.InsertNewItem(item, item.getChildren().length);
-	MM.App.action(action);	
+	MM.App.action(action);
 
 	MM.Command.Edit.execute();
 
@@ -1676,7 +1676,7 @@ MM.Command.Delete.isValid = function() {
 }
 MM.Command.Delete.execute = function() {
 	var action = new MM.Action.RemoveItem(MM.App.current);
-	MM.App.action(action);	
+	MM.App.action(action);
 }
 
 MM.Command.Swap = Object.create(MM.Command, {
@@ -1692,7 +1692,7 @@ MM.Command.Swap.execute = function(e) {
 
 	var diff = (e.keyCode == 38 ? -1 : 1);
 	var action = new MM.Action.Swap(MM.App.current, diff);
-	MM.App.action(action);	
+	MM.App.action(action);
 }
 
 MM.Command.Side = Object.create(MM.Command, {
@@ -1883,6 +1883,15 @@ MM.Command.Fold.execute = function() {
 	var item = MM.App.current;
 	if (item.isCollapsed()) { item.expand(); } else { item.collapse(); }
 	MM.App.map.ensureItemVisibility(item);
+}
+
+console.log("New !");
+MM.Command.ExportToIndent = Object.create(MM.Command, {
+	label: {value: "Export To Indent"}
+});
+MM.Command.ExportToIndent.execute = function() {
+	var item = MM.App.current;
+	console.log(item);
 }
 MM.Command.Edit = Object.create(MM.Command, {
 	label: {value: "Edit item"},
@@ -3236,15 +3245,35 @@ MM.Backend.WebDAV.load = function(url) {
 	return this._request("get", url);
 }
 
+MM.Backend.WebDAV._cleanurl = function(url) {
+  var dims = url.split("@");
+  var username = "", password = "";
+  if (dims.length > 1) {
+    var p2 = dims[0],
+          httpparts = p2.split("//"),
+          httpsp = httpparts[0],
+          uandpparts = httpparts[1].split(":");
+    url = httpsp + "//" + dims[1];
+    username = uandpparts[0];
+    password = uandpparts[1];
+  }
+  return [url, username, password];
+}
 MM.Backend.WebDAV._request = function(method, url, data) {
+  var parts = MM.Backend.WebDAV._cleanurl(url);
+  var username = parts[1], password = parts[2];
+  url = parts[0];
 	var xhr = new XMLHttpRequest();
-	xhr.open(method, url, true);
+	xhr.open(method, url, true, username, password);
+
 	xhr.withCredentials = true;
 
 	var promise = new Promise();
-	
+
 	Promise.send(xhr, data).then(
-		function(xhr) { promise.fulfill(xhr.responseText); },
+		function(xhr) { promise.fulfill(xhr.responseText);
+      MM.UI.Backend.WebDAV.filllist();
+    },
 		function(xhr) { promise.reject(new Error("HTTP/" + xhr.status + "\n\n" + xhr.responseText)); }
 	);
 
@@ -3514,8 +3543,8 @@ MM.Backend.GDrive = Object.create(MM.Backend, {
 	id: {value: "gdrive"},
 	label: {value: "Google Drive"},
 	scope: {value: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.install"},
-	clientId: {value: "767837575056-h87qmlhmhb3djhaaqta5gv2v3koa9hii.apps.googleusercontent.com"},
-	apiKey: {value: "AIzaSyCzu1qVxlgufneOYpBgDJXN6Z9SNVcHYWM"},
+	clientId: {value: "510182693209-e8e9cflc6sq45faqe0b82s7p380844tt.apps.googleusercontent.com"},
+	apiKey: {value: "AIzaSyC0MTeQdz9CX4BLslUvbjQs4sEpHg_2vfU"},
 	fileId: {value: null, writable: true}
 });
 
@@ -3572,7 +3601,7 @@ MM.Backend.GDrive._send = function(data, name, mime) {
 			promise.fulfill();
 		}
 	}.bind(this));
-	
+
 	return promise;
 }
 
@@ -3663,7 +3692,7 @@ MM.Backend.GDrive._connect = function() {
 MM.Backend.GDrive._loadGapi = function() {
 	var promise = new Promise();
 	if (window.gapi) { return promise.fulfill(); }
-	
+
 	var script = document.createElement("script");
 	var name = ("cb"+Math.random()).replace(".", "");
 	window[name] = promise.fulfill.bind(promise);
@@ -3927,7 +3956,7 @@ MM.UI.Help = function() {
 		121: "F10",
 		"-": "&minus;"
 	};
-	
+
 	this._build();
 }
 
@@ -3997,9 +4026,9 @@ MM.UI.Help.prototype._formatKey = function(key) {
 	if (key.ctrlKey) { str += "Ctrl+"; }
 	if (key.altKey) { str += "Alt+"; }
 	if (key.shiftKey) { str += "Shift+"; }
-	if (key.charCode) { 
+	if (key.charCode) {
 		var ch = String.fromCharCode(key.charCode);
-		str += this._map[ch] || ch.toUpperCase(); 
+		str += this._map[ch] || ch.toUpperCase();
 	}
 	if (key.keyCode) { str += this._map[key.keyCode] || String.fromCharCode(key.keyCode); }
 	return str;
@@ -4325,8 +4354,9 @@ MM.UI.Backend.WebDAV.init = function(select) {
 
 	this._url = this._node.querySelector(".url");
 	this._url.value = localStorage.getItem(this._prefix + "url") || "";
-	
+
 	this._current = "";
+  this.filllist();
 }
 
 MM.UI.Backend.WebDAV.getState = function() {
@@ -4338,6 +4368,20 @@ MM.UI.Backend.WebDAV.getState = function() {
 
 MM.UI.Backend.WebDAV.setState = function(data) {
 	this._load(data.url);
+}
+
+MM.UI.Backend.WebDAV.filllist = function() {
+  $("#webdav .list").find("option").remove();
+  $.ajax({
+      url:'http://mindmap.dev.jufist.org/list.json',
+      type:'POST',
+      dataType: 'json',
+      success: function( json ) {
+          $.each(json, function(i, value) {
+              $("#webdav .list").append($('<option>').text(value).attr('value', value));
+          });
+      }
+  });
 }
 
 MM.UI.Backend.WebDAV.save = function() {
@@ -4364,7 +4408,9 @@ MM.UI.Backend.WebDAV.save = function() {
 }
 
 MM.UI.Backend.WebDAV.load = function() {
-	this._load(this._url.value);
+  var url = localStorage.getItem(this._prefix + "url") || "";
+  var theurl = url + "/" + $("#webdav .list").val();
+	this._load(theurl);
 }
 
 MM.UI.Backend.WebDAV._load = function(url) {
@@ -4384,7 +4430,7 @@ MM.UI.Backend.WebDAV._load = function(url) {
 MM.UI.Backend.WebDAV._loadDone = function(data) {
 	try {
 		var json = MM.Format.JSON.from(data);
-	} catch (e) { 
+	} catch (e) {
 		this._error(e);
 	}
 
