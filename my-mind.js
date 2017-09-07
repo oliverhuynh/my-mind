@@ -1913,28 +1913,39 @@ jQuery.fn.selectText = function(){
 };
 var _to_Indent = {
   // TODO: build can attach to prototype of item for easier managing
-  addidentation: function(identation) {
+  addidentation: function(identation, item, pos) {
+    pos = pos || 0;
     if (identation== 0) {
-      return "";
+      return "<div class='theitem'>"+ item.getText() +"</div><br /><label>Items: </label>";
     }
-    return "&nbsp;".repeat(identation-1) + "-&nbsp;";
+    if (identation== 1) {
+      var addbr = '';
+      if (pos > 0)  {
+        addbr = '<br />';
+      }
+      return addbr + "<div class='theitem'>"+ '<b>'+ item.getText() +'</b>' +"</div>";
+    }
+    if (identation== 2) {
+      return (pos+1).toString() +'.&nbsp;'+ item.getText() +'';
+    }
+    return "&nbsp;&nbsp;&nbsp;".repeat(identation-2) + "-&nbsp;" + item.getText();
   },
-  build: function(item, identation) {
+  build: function(item, identation, pos) {
     identation = identation || 0;
     // Get text and print as headline
-    var _return = this.addidentation(identation) + item.getText();
+    var _return = this.addidentation(identation, item, pos);
     // Loop for all children
     // Get content and put below headline
     var _child_return = "";
     var childrens = item.getChildren(), cl = childrens.length;
     var i = 0;
     for (i=0; i<=cl-1; i++) {
-      _child_return += _to_Indent.build(childrens[i], identation+1);
+      _child_return += _to_Indent.build(childrens[i], identation+1, i);
     }
 
     // If content is single line, put right after headline
     _child_return = "<div class='theitemgroups'>"+ _child_return +"</div>";
-    _return = "<div class='theitem'>"+ _return +"</div>" + _child_return;
+    _return +=  _child_return;
 
     return _return;
   }
@@ -1943,7 +1954,7 @@ MM.Command.ExportToIndent.execute = function() {
 	var item = MM.App.current;
 	var _out = _to_Indent.build(item);
   MM.App.stophandle = true;
-  $('<div id="dialog-form" title="Indent Exportation"></div>').append("<div class='export'>" + _out + "</div>").appendTo($('body')).dialog({
+  $('<div id="dialog-form" title="Indent Exportation"></div>').append("<div class='export' style='overflow:auto; max-height: 80vh;'>" + _out + "</div>").appendTo($('body')).dialog({
     modal: true,
     buttons: {
       Ok: function() {
@@ -1961,6 +1972,37 @@ MM.Command.ExportToIndent.execute = function() {
       MM.App.stophandle = false;
     }
   });
+}
+
+MM.Command.WorkFromHere = Object.create(MM.Command, {
+	label: {value: "Work From Here"}
+});
+
+MM.Command.WorkFromHere.execute = function() {
+  var item = MM.App.current;
+  var r = confirm("Do you save your work yet?");
+  if (r == true) {
+    data = MM.UI.Backend.WebDAV.getState();
+    data.workingdirectory = item['_id'];
+    MM.UI.Backend.WebDAV.setState(data);
+  } else {
+
+  }
+}
+
+MM.Command.ToRoot = Object.create(MM.Command, {
+	label: {value: "Work At Root"}
+});
+MM.Command.ToRoot.execute = function() {
+  var item = MM.App.current;
+  var r = confirm("Do you save your work yet?");
+  if (r == true) {
+    data = MM.UI.Backend.WebDAV.getState();
+    data.workingdirectory = '';
+    MM.UI.Backend.WebDAV.setState(data);
+  } else {
+
+  }
 }
 MM.Command.Edit = Object.create(MM.Command, {
 	label: {value: "Edit item"},
@@ -4433,18 +4475,20 @@ MM.UI.Backend.WebDAV.init = function(select) {
 	this._url.value = localStorage.getItem(this._prefix + "url") || "";
 
 	this._current = "";
+  this.workingdirectory = "";
   this.filllist();
 }
 
 MM.UI.Backend.WebDAV.getState = function() {
 	var data = {
-		url: this._current
+		url: this._current,
+    workingdirectory: this.workingdirectory
 	};
 	return data;
 }
 
 MM.UI.Backend.WebDAV.setState = function(data) {
-	this._load(data.url);
+	this._load(data.url, data.workingdirectory);
 }
 
 MM.UI.Backend.WebDAV.filllist = function() {
@@ -4475,8 +4519,9 @@ MM.UI.Backend.WebDAV.save = function() {
 	}
 
 	this._current = url;
+  // this.workingdirectory = "";
 	var json = map.toJSON();
-	var data = MM.Format.JSON.to(json);
+	var data = MM.Format.JSON.to(MM.UI.Backend.WebDAV._saveTheTree(json));
 
 	this._backend.save(data, url).then(
 		this._saveDone.bind(this),
@@ -4490,8 +4535,10 @@ MM.UI.Backend.WebDAV.load = function() {
 	this._load(theurl);
 }
 
-MM.UI.Backend.WebDAV._load = function(url) {
+MM.UI.Backend.WebDAV._load = function(url, workingdirectory) {
 	this._current = url;
+  this.workingdirectory = workingdirectory || '';
+  this.objectpaths = [];
 	MM.App.setThrobber(true);
 
 	var lastIndex = url.lastIndexOf("/");
@@ -4504,9 +4551,62 @@ MM.UI.Backend.WebDAV._load = function(url) {
 	);
 }
 
+function getObjects(obj, key, val) {
+    var objects = [];
+    var objectpaths = [];
+    for (var i in obj) {
+        if (!obj.hasOwnProperty(i)) continue;
+        if (typeof obj[i] == 'object') {
+            var r = getObjects(obj[i], key, val);
+            if (r[0].length) {
+              objectpaths.push(i);
+              objects = objects.concat(r[0]);
+              objectpaths = objectpaths.concat(r[1]);
+            }
+        } else if (i == key && obj[key] == val) {
+            objects.push(obj);
+        }
+    }
+    return [objects, objectpaths];
+}
+
+MM.UI.Backend.WebDAV._saveTheTree = function(json) {
+  var target = this.jsondata;
+  if (!this.objectpaths || !this.objectpaths.length) {
+    return json;
+  }
+  for (i=0; i <= this.objectpaths.length -2; i++) {
+    target = target[this.objectpaths[i]];
+  }
+
+  var source = json.root;
+  delete source['layout'];
+  target[this.objectpaths[this.objectpaths.length - 1]] = source;
+  return this.jsondata;
+}
+
+MM.UI.Backend.WebDAV._pickTheTree = function(json, id) {
+  if (id == '') {
+    return json;
+  }
+
+  var ret = getObjects(json, 'id', id);
+  this.objectpaths = [];
+  this.jsondata = $.extend({}, json);
+  if (ret[0].length) {
+    this.objectpaths = ret[1];
+    ret = ret[0][0];
+    ret.layout = 'map';
+    return {root: ret, id: id};
+  }
+  else {
+    return json;
+  }
+}
+
 MM.UI.Backend.WebDAV._loadDone = function(data) {
 	try {
-		var json = MM.Format.JSON.from(data);
+		var json = MM.UI.Backend.WebDAV._pickTheTree(MM.Format.JSON.from(data), this.workingdirectory);
 	} catch (e) {
 		this._error(e);
 	}

@@ -9,18 +9,20 @@ MM.UI.Backend.WebDAV.init = function(select) {
 	this._url.value = localStorage.getItem(this._prefix + "url") || "";
 
 	this._current = "";
+  this.workingdirectory = "";
   this.filllist();
 }
 
 MM.UI.Backend.WebDAV.getState = function() {
 	var data = {
-		url: this._current
+		url: this._current,
+    workingdirectory: this.workingdirectory
 	};
 	return data;
 }
 
 MM.UI.Backend.WebDAV.setState = function(data) {
-	this._load(data.url);
+	this._load(data.url, data.workingdirectory);
 }
 
 MM.UI.Backend.WebDAV.filllist = function() {
@@ -51,8 +53,9 @@ MM.UI.Backend.WebDAV.save = function() {
 	}
 
 	this._current = url;
+  // this.workingdirectory = "";
 	var json = map.toJSON();
-	var data = MM.Format.JSON.to(json);
+	var data = MM.Format.JSON.to(MM.UI.Backend.WebDAV._saveTheTree(json));
 
 	this._backend.save(data, url).then(
 		this._saveDone.bind(this),
@@ -66,8 +69,10 @@ MM.UI.Backend.WebDAV.load = function() {
 	this._load(theurl);
 }
 
-MM.UI.Backend.WebDAV._load = function(url) {
+MM.UI.Backend.WebDAV._load = function(url, workingdirectory) {
 	this._current = url;
+  this.workingdirectory = workingdirectory || '';
+  this.objectpaths = [];
 	MM.App.setThrobber(true);
 
 	var lastIndex = url.lastIndexOf("/");
@@ -80,9 +85,62 @@ MM.UI.Backend.WebDAV._load = function(url) {
 	);
 }
 
+function getObjects(obj, key, val) {
+    var objects = [];
+    var objectpaths = [];
+    for (var i in obj) {
+        if (!obj.hasOwnProperty(i)) continue;
+        if (typeof obj[i] == 'object') {
+            var r = getObjects(obj[i], key, val);
+            if (r[0].length) {
+              objectpaths.push(i);
+              objects = objects.concat(r[0]);
+              objectpaths = objectpaths.concat(r[1]);
+            }
+        } else if (i == key && obj[key] == val) {
+            objects.push(obj);
+        }
+    }
+    return [objects, objectpaths];
+}
+
+MM.UI.Backend.WebDAV._saveTheTree = function(json) {
+  var target = this.jsondata;
+  if (!this.objectpaths || !this.objectpaths.length) {
+    return json;
+  }
+  for (i=0; i <= this.objectpaths.length -2; i++) {
+    target = target[this.objectpaths[i]];
+  }
+
+  var source = json.root;
+  delete source['layout'];
+  target[this.objectpaths[this.objectpaths.length - 1]] = source;
+  return this.jsondata;
+}
+
+MM.UI.Backend.WebDAV._pickTheTree = function(json, id) {
+  if (id == '') {
+    return json;
+  }
+
+  var ret = getObjects(json, 'id', id);
+  this.objectpaths = [];
+  this.jsondata = $.extend({}, json);
+  if (ret[0].length) {
+    this.objectpaths = ret[1];
+    ret = ret[0][0];
+    ret.layout = 'map';
+    return {root: ret, id: id};
+  }
+  else {
+    return json;
+  }
+}
+
 MM.UI.Backend.WebDAV._loadDone = function(data) {
 	try {
-		var json = MM.Format.JSON.from(data);
+		var json = MM.UI.Backend.WebDAV._pickTheTree(MM.Format.JSON.from(data), this.workingdirectory);
 	} catch (e) {
 		this._error(e);
 	}

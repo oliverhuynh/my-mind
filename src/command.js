@@ -313,28 +313,39 @@ jQuery.fn.selectText = function(){
 };
 var _to_Indent = {
   // TODO: build can attach to prototype of item for easier managing
-  addidentation: function(identation) {
+  addidentation: function(identation, item, pos) {
+    pos = pos || 0;
     if (identation== 0) {
-      return "";
+      return "<div class='theitem'>"+ item.getText() +"</div><br /><label>Items: </label>";
     }
-    return "&nbsp;".repeat(identation-1) + "-&nbsp;";
+    if (identation== 1) {
+      var addbr = '';
+      if (pos > 0)  {
+        addbr = '<br />';
+      }
+      return addbr + "<div class='theitem'>"+ '<b>'+ item.getText() +'</b>' +"</div>";
+    }
+    if (identation== 2) {
+      return (pos+1).toString() +'.&nbsp;'+ item.getText() +'';
+    }
+    return "&nbsp;&nbsp;&nbsp;".repeat(identation-2) + "-&nbsp;" + item.getText();
   },
-  build: function(item, identation) {
+  build: function(item, identation, pos) {
     identation = identation || 0;
     // Get text and print as headline
-    var _return = this.addidentation(identation) + item.getText();
+    var _return = this.addidentation(identation, item, pos);
     // Loop for all children
     // Get content and put below headline
     var _child_return = "";
     var childrens = item.getChildren(), cl = childrens.length;
     var i = 0;
     for (i=0; i<=cl-1; i++) {
-      _child_return += _to_Indent.build(childrens[i], identation+1);
+      _child_return += _to_Indent.build(childrens[i], identation+1, i);
     }
 
     // If content is single line, put right after headline
     _child_return = "<div class='theitemgroups'>"+ _child_return +"</div>";
-    _return = "<div class='theitem'>"+ _return +"</div>" + _child_return;
+    _return +=  _child_return;
 
     return _return;
   }
@@ -343,7 +354,7 @@ MM.Command.ExportToIndent.execute = function() {
 	var item = MM.App.current;
 	var _out = _to_Indent.build(item);
   MM.App.stophandle = true;
-  $('<div id="dialog-form" title="Indent Exportation"></div>').append("<div class='export'>" + _out + "</div>").appendTo($('body')).dialog({
+  $('<div id="dialog-form" title="Indent Exportation"></div>').append("<div class='export' style='overflow:auto; max-height: 80vh;'>" + _out + "</div>").appendTo($('body')).dialog({
     modal: true,
     buttons: {
       Ok: function() {
@@ -361,4 +372,35 @@ MM.Command.ExportToIndent.execute = function() {
       MM.App.stophandle = false;
     }
   });
+}
+
+MM.Command.WorkFromHere = Object.create(MM.Command, {
+	label: {value: "Work From Here"}
+});
+
+MM.Command.WorkFromHere.execute = function() {
+  var item = MM.App.current;
+  var r = confirm("Do you save your work yet?");
+  if (r == true) {
+    data = MM.UI.Backend.WebDAV.getState();
+    data.workingdirectory = item['_id'];
+    MM.UI.Backend.WebDAV.setState(data);
+  } else {
+
+  }
+}
+
+MM.Command.ToRoot = Object.create(MM.Command, {
+	label: {value: "Work At Root"}
+});
+MM.Command.ToRoot.execute = function() {
+  var item = MM.App.current;
+  var r = confirm("Do you save your work yet?");
+  if (r == true) {
+    data = MM.UI.Backend.WebDAV.getState();
+    data.workingdirectory = '';
+    MM.UI.Backend.WebDAV.setState(data);
+  } else {
+
+  }
 }
