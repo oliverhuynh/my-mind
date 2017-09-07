@@ -44,13 +44,17 @@ MM.UI.Backend.WebDAV.save = function() {
 
 	var map = MM.App.map;
 	var url = this._url.value;
-	localStorage.setItem(this._prefix + "url", url);
-
-	if (url.match(/\.mymind$/)) { /* complete file name */
-	} else { /* just a path */
-		if (url.charAt(url.length-1) != "/") { url += "/"; }
-		url += map.getName() + "." + MM.Format.JSON.extension;
-	}
+  if (this._current == '') {
+    localStorage.setItem(this._prefix + "url", url);
+    if (url.match(/\.mymind$/)) { /* complete file name */
+    } else { /* just a path */
+      if (url.charAt(url.length-1) != "/") { url += "/"; }
+      url += map.getName() + "." + MM.Format.JSON.extension;
+    }
+  }
+  else {
+    url = this._current;
+  }
 
 	this._current = url;
   // this.workingdirectory = "";
@@ -131,6 +135,7 @@ MM.UI.Backend.WebDAV._pickTheTree = function(json, id) {
     this.objectpaths = ret[1];
     ret = ret[0][0];
     ret.layout = 'map';
+    ret.collapsed = 0;
     return {root: ret, id: id};
   }
   else {
