@@ -78,10 +78,39 @@ MM.UI.Backend._saveDone = function() {
 	MM.publish("save-done", this);
 }
 
+var _to_level = function(object, level) {
+  if (level == 0) {
+    return [object];
+  }
+  var items = [];
+  for (var key in object) {
+    if (object[key]) {
+      if (jQuery.isPlainObject(object[key]) || jQuery.isArray(object[key])) {
+        items = items.concat(_to_level(object[key], level - 1));
+      }
+    }
+  }
+
+  return items;
+}
+
+MM.UI.Backend.maxLevel = 5; // Odd number
+// Limit JSON to smaller area
+MM.UI.Backend.collapseJson = function(json) {
+  var toCollapsed = _to_level(json, MM.UI.Backend.maxLevel);
+  for (var key in toCollapsed) {
+    if (toCollapsed[key] && toCollapsed[key].children) {
+      toCollapsed[key].collapsed = 1;
+    }
+  }
+
+  return json;
+}
+
 MM.UI.Backend._loadDone = function(json) {
 	MM.App.setThrobber(false);
 	try {
-		MM.App.setMap(MM.Map.fromJSON(json));
+		MM.App.setMap(MM.Map.fromJSON(MM.UI.Backend.collapseJson(json)));
 		MM.publish("load-done", this);
 	} catch (e) {
 		this._error(e);

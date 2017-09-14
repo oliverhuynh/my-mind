@@ -311,6 +311,18 @@ jQuery.fn.selectText = function(){
         selection.addRange(range);
     }
 };
+
+function __truncate(string, l){
+  var ret;
+  if (string.length > l) {
+    ret = string.substring(0,l)+'...';
+  }
+  else {
+    ret = string;
+  }
+  return $("<div>").text(ret).html();
+};
+
 var _to_Indent = {
   // TODO: build can attach to prototype of item for easier managing
   addidentation: function(identation, item, pos) {
@@ -323,7 +335,7 @@ var _to_Indent = {
       if (pos > 0)  {
         addbr = '<br />';
       }
-      return addbr + "<div class='theitem'>"+ '<b>'+ item.getText() +'</b>' +"</div>";
+      return addbr + "<div class='theitem'>"+ '<b>'+ __truncate(item.getText(), 100) +'</b>' +"</div>";
     }
     if (identation== 2) {
       return (pos+1).toString() +'.&nbsp;'+ item.getText() +'';
@@ -353,8 +365,9 @@ var _to_Indent = {
 MM.Command.ExportToIndent.execute = function() {
 	var item = MM.App.current;
 	var _out = _to_Indent.build(item);
+  var _export = "<div class='export' style='overflow:auto; max-height: 80vh;'>" + _out + "</div>";
   MM.App.stophandle = true;
-  $('<div id="dialog-form" title="Indent Exportation"></div>').append("<div class='export' style='overflow:auto; max-height: 80vh;'>" + _out + "</div>").appendTo($('body')).dialog({
+  $('<div id="dialog-form" title="Indent Exportation"></div>').append(_export).appendTo($('body')).dialog({
     modal: true,
     buttons: {
       Ok: function() {

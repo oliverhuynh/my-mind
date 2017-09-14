@@ -1,3 +1,4 @@
+/** TODO: Converted to http://dev.jufist.org/scsstocss/1505117672-59b645e8deed5*/
 .item {
 	position: absolute;
 }
@@ -28,6 +29,12 @@
 	min-height: 1.3em;
 	line-height: 1.3em;
 	outline: none;
+}
+
+.text:not([contenteditable="true"]) {
+  max-width: 40vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .value, .status {
